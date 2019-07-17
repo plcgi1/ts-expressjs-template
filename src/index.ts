@@ -4,7 +4,7 @@ import express from "express";
 const app = express();
 const port = 8080; // default port to listen
 
-function loggerMiddleware(request: express.Request, response: express.Response, next: any) {
+function loggerMiddleware(request: express.Request, response: express.Response, next: express.NextFunction) {
     const data: string = Object.keys(request.query).length > 0
         ? JSON.stringify(request.query)
         : JSON.stringify(request.body);

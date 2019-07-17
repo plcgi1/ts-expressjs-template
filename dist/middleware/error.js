@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 function errorMiddleware(error, request, response, next) {
     // tslint:disable-next-line:no-console
-    console.error("error", error);
+    console.error("errorMiddleware.EEEEE", error);
     let status = 500;
     if (error.name === "ValidationError") {
         status = 400;
@@ -13,7 +13,8 @@ function errorMiddleware(error, request, response, next) {
         .json({
         message,
         status
-    });
+    })
+        .end();
 }
 exports.default = errorMiddleware;
 //# sourceMappingURL=error.js.map

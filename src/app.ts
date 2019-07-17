@@ -1,4 +1,5 @@
 import * as bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import express from "express";
 import mongoose from "mongoose";
 import errorMiddleware from "./middleware/error";
@@ -73,6 +74,7 @@ class App {
     private initializeMiddlewares() {
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({ extended: false }));
+        this.app.use(cookieParser());
     }
 
     private initializeControllers(controllers: any) {

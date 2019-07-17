@@ -4,7 +4,7 @@ class HttpException extends Error {
     constructor(status, message) {
         super(message);
         // tslint:disable-next-line:no-console
-        console.info("YTHTHI", this);
+        console.info("HttpException", this);
         if (this.name === "ValidationError") {
             status = 400;
         }

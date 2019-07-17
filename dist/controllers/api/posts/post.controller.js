@@ -13,32 +13,36 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const http_exception_1 = __importDefault(require("../../../exceptions/http.exception"));
+const errors_1 = __importDefault(require("../../../helpers/errors"));
+const auth_middleware_1 = __importDefault(require("../../../middleware/auth.middleware"));
+const validation_middleware_1 = __importDefault(require("../../../middleware/validation.middleware"));
 const posts_model_1 = __importDefault(require("../../../models/posts.model"));
+const create_post_dto_1 = __importDefault(require("./create-post.dto"));
 class PostsController {
     constructor() {
         this.path = "/posts";
         this.router = express_1.default.Router();
         this.posts = posts_model_1.default;
+        this.create = (req, response) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const postData = req.body;
+                const newPost = new this.posts(Object.assign({}, postData, { author: req.user._id }));
+                const savedPost = yield newPost.save();
+                yield savedPost.populate("author", "-password").execPopulate();
+                return response.json(savedPost);
+            }
+            catch (error) {
+                return errors_1.default(error, response);
+            }
+        });
         this.list = (request, response) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const data = yield this.posts.find({});
-                return response.json(data);
+                const count = yield this.posts.countDocuments({});
+                return response.json({ count, data });
             }
             catch (error) {
-                throw new Error(error);
-            }
-        });
-        this.create = (req, response, next) => __awaiter(this, void 0, void 0, function* () {
-            const postData = req.body;
-            try {
-                const post = new this.posts(postData);
-                const result = yield post.save();
-                return response.json(result);
-            }
-            catch (error) {
-                // return response.status(500).json({ msg: error.message });
-                return next(error);
+                return errors_1.default(error, response);
             }
         });
         this.get = (req, response) => __awaiter(this, void 0, void 0, function* () {
@@ -46,16 +50,12 @@ class PostsController {
                 const id = mongoose_1.default.Types.ObjectId(req.params._id);
                 const result = yield this.posts.findById(id);
                 if (!result) {
-                    return response.status(404).json({ msg: "Mot found" });
+                    return response.status(404).json({ message: "Not found" });
                 }
                 return response.json(result);
             }
             catch (error) {
-                // throw new Error(error);
-                // tslint:disable-next-line:no-console
-                console.error("error", error);
-                throw new http_exception_1.default(500, error);
-                // return response.status(500).json({ msg: "Server error" });
+                return errors_1.default(error, response);
             }
         });
         this.intializeRoutes();
@@ -63,7 +63,7 @@ class PostsController {
     intializeRoutes() {
         this.router.get(`${this.path}/:_id`, this.get);
         this.router.get(this.path, this.list);
-        this.router.post(this.path, this.create);
+        this.router.post(this.path, auth_middleware_1.default, validation_middleware_1.default(create_post_dto_1.default), this.create);
     }
 }
 exports.default = PostsController;
