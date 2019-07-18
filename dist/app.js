@@ -15,6 +15,8 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const error_1 = __importDefault(require("./middleware/error"));
+// TODO add logger
+// TODO add configuration with environment
 class App {
     constructor(controllers) {
         this.app = express_1.default();

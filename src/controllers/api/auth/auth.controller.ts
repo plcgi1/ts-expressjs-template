@@ -10,7 +10,7 @@ import UserProvider from "../../../providers/user.provider";
 import LoginDto from "./login.dto";
 import RegisterUserDto from "./register.user.dto";
 
-class AuthController implements IController {
+export default class AuthController implements IController {
     public path = "/auth";
     public router = express.Router();
     private user = Users;
@@ -49,7 +49,8 @@ class AuthController implements IController {
     private loggingIn = async (request: express.Request, response: express.Response) => {
         // TODO move find user to user.provider
         const logInData: LoginDto = request.body;
-        const user = await this.user.findOne({ email: logInData.email });
+
+        const user = await this.userProvider.getByEmail( logInData.email );
         if (user) {
             const isPasswordMatching = await this.authProvider.comparePassword(logInData.password, user.password);
             if (isPasswordMatching) {
@@ -60,7 +61,7 @@ class AuthController implements IController {
 
                 response.set("Set-Cookie", [cookie]);
 
-                response.send(user);
+                response.json(user);
             } else {
                 return handleError(new BadCredentialsException(), response);
             }
@@ -74,5 +75,3 @@ class AuthController implements IController {
         response.send(200);
     }
 }
-
-export default AuthController;

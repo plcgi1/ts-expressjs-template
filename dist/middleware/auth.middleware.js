@@ -22,7 +22,7 @@ const jwt = __importStar(require("jsonwebtoken"));
 const auth_token_missing_exception_1 = __importDefault(require("../exceptions/auth.token.missing.exception"));
 const wrong_auth_token_exception_1 = __importDefault(require("../exceptions/wrong-auth-token.exception"));
 const errors_1 = __importDefault(require("../helpers/errors"));
-const users_model_1 = __importDefault(require("../models/users.model"));
+const user_provider_1 = __importDefault(require("../providers/user.provider"));
 function authMiddleware(request, response, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const cookies = request.cookies;
@@ -31,7 +31,8 @@ function authMiddleware(request, response, next) {
             try {
                 const verificationResponse = jwt.verify(cookies.Authorization, secret);
                 const id = verificationResponse._id;
-                const user = yield users_model_1.default.findById(id);
+                const provider = new user_provider_1.default();
+                const user = yield provider.getById(id);
                 if (user) {
                     request.user = user;
                     next();

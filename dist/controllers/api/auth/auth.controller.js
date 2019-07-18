@@ -43,6 +43,7 @@ class AuthController {
                     return errors_1.default(new user_exists_exception_1.default(userData.email), response);
                 }
                 const newUser = yield this.userProvider.create(Object.assign({}, userData));
+                // TODO add send hash to email for new user
                 newUser.password = undefined;
                 response.json(newUser);
             }
@@ -51,8 +52,9 @@ class AuthController {
             }
         });
         this.loggingIn = (request, response) => __awaiter(this, void 0, void 0, function* () {
+            // TODO move find user to user.provider
             const logInData = request.body;
-            const user = yield this.user.findOne({ email: logInData.email });
+            const user = yield this.userProvider.getByEmail(logInData.email);
             if (user) {
                 const isPasswordMatching = yield this.authProvider.comparePassword(logInData.password, user.password);
                 if (isPasswordMatching) {
@@ -60,7 +62,7 @@ class AuthController {
                     const tokenData = this.authProvider.createToken(user);
                     const cookie = this.authProvider.createCookie(tokenData);
                     response.set("Set-Cookie", [cookie]);
-                    response.send(user);
+                    response.json(user);
                 }
                 else {
                     return errors_1.default(new bad_credentials_exception_1.default(), response);

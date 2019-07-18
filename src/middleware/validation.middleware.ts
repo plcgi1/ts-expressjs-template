@@ -9,7 +9,7 @@ function validationMiddleware<T>(type: any, skipMissingProperties = false): expr
         const param: any = (/post|put|patch/i).test(req.method) ? req.body : req.query;
 
         Object.keys(param).forEach((key) => {
-            if ((/^\d+$/).test(param[key])) {
+            if (!(/password/).test(key) && (/^\d+$/).test(param[key])) {
                 param[key] = parseInt(param[key], 10);
             }
         });

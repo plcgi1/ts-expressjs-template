@@ -5,7 +5,7 @@ interface IUser {
     _id?: string;
 }
 interface IUserList {
-    data: IUser;
+    data: IUser[];
     count: number;
 }
 export { IUser, IUserList };

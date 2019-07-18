@@ -9,7 +9,7 @@ import PostProvider from "../../../providers/post.provider";
 import SearchParamsDto from "../../../validators/search-params.dto";
 import CreatePostDto from "./create-post.dto";
 
-class PostsController implements IController {
+export default class PostsController implements IController {
     public path = "/posts";
     public router = express.Router();
     public postProvider = new PostProvider();
@@ -62,5 +62,3 @@ class PostsController implements IController {
     }
 
 }
-
-export default PostsController;

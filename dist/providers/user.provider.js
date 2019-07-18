@@ -19,6 +19,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const bcrypt = __importStar(require("bcrypt"));
+const pagination_1 = __importDefault(require("../helpers/pagination"));
 const users_model_1 = __importDefault(require("../models/users.model"));
 class UserProvider {
     constructor() {
@@ -35,6 +36,25 @@ class UserProvider {
         return __awaiter(this, void 0, void 0, function* () {
             const user = yield this.user.findOne({ email });
             return user;
+        });
+    }
+    getById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const user = yield this.user.findById(id);
+                return user;
+            }
+            catch (error) {
+                throw new Error(error);
+            }
+        });
+    }
+    list(query, pagerOptions) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const options = pagination_1.default(pagerOptions);
+            const data = yield this.user.find(query, {}, options);
+            const count = yield this.user.countDocuments(query);
+            return { data, count };
         });
     }
 }
