@@ -1,19 +1,18 @@
 import express from "express";
-import mongoose from "mongoose";
 import handleError from "../../../helpers/errors";
 import IController from "../../../interfaces/controller.interface";
-import IPost from "../../../interfaces/post.interface";
+import { IPost, IPostList } from "../../../interfaces/post.interface";
 import IRequestWithUser from "../../../interfaces/request-with-user.interface";
-import IUser from "../../../interfaces/user.interface";
 import authMiddleware from "../../../middleware/auth.middleware";
 import validationMiddleware from "../../../middleware/validation.middleware";
-import Posts from "../../../models/posts.model";
+import PostProvider from "../../../providers/post.provider";
+import SearchParamsDto from "../../../validators/search-params.dto";
 import CreatePostDto from "./create-post.dto";
 
 class PostsController implements IController {
     public path = "/posts";
     public router = express.Router();
-    public posts = Posts;
+    public postProvider = new PostProvider();
 
     constructor() {
         this.intializeRoutes();
@@ -21,20 +20,18 @@ class PostsController implements IController {
 
     public intializeRoutes() {
         this.router.get(`${this.path}/:_id`, this.get);
-        this.router.get(this.path, this.list);
+        this.router.get(this.path, validationMiddleware(SearchParamsDto), this.list);
         this.router.post(this.path, authMiddleware, validationMiddleware(CreatePostDto), this.create);
     }
 
     private create = async (req: IRequestWithUser, response: express.Response) => {
         try {
             const postData: CreatePostDto = req.body;
-            const newPost = new this.posts({
+
+            const savedPost = await this.postProvider.create({
                 ...postData,
                 author: req.user._id
             });
-            const savedPost = await newPost.save();
-            await savedPost.populate("author", "-password").execPopulate();
-
             return response.json(savedPost);
         } catch (error) {
             return handleError(error, response);
@@ -43,10 +40,9 @@ class PostsController implements IController {
 
     private list = async (request: express.Request, response: express.Response) => {
         try {
-            const data: IPost[] = await this.posts.find({});
-            const count: number = await this.posts.countDocuments({});
+            const result: IPostList = await this.postProvider.list(request.query);
 
-            return response.json({ count, data });
+            return response.json(result);
         } catch (error) {
             return handleError(error, response);
         }
@@ -54,8 +50,7 @@ class PostsController implements IController {
 
     private get = async (req: express.Request, response: express.Response) => {
         try {
-            const id = mongoose.Types.ObjectId(req.params._id);
-            const result: IPost = await this.posts.findById(id);
+            const result: IPost = await this.postProvider.get(req.params._id);
             if (!result) {
                 return response.status(404).json({ message: "Not found" });
             }

@@ -15,6 +15,7 @@ const postSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId
     },
     content: { type: String },
+    dateCreated: { type: Date, default: Date.now() },
     title: { type: String }
 });
 const Posts = mongoose.model("Post", postSchema);

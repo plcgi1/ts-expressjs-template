@@ -2,7 +2,10 @@ interface IUser {
     name: string;
     email: string;
     password: string;
-    _id: string;
+    _id?: string;
 }
-
-export default IUser;
+interface IUserList {
+    data: IUser;
+    count: number;
+}
+export { IUser, IUserList };

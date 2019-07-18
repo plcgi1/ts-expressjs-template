@@ -12,23 +12,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = __importDefault(require("mongoose"));
 const errors_1 = __importDefault(require("../../../helpers/errors"));
 const auth_middleware_1 = __importDefault(require("../../../middleware/auth.middleware"));
 const validation_middleware_1 = __importDefault(require("../../../middleware/validation.middleware"));
-const posts_model_1 = __importDefault(require("../../../models/posts.model"));
+const post_provider_1 = __importDefault(require("../../../providers/post.provider"));
+const search_params_dto_1 = __importDefault(require("../../../validators/search-params.dto"));
 const create_post_dto_1 = __importDefault(require("./create-post.dto"));
 class PostsController {
     constructor() {
         this.path = "/posts";
         this.router = express_1.default.Router();
-        this.posts = posts_model_1.default;
+        this.postProvider = new post_provider_1.default();
         this.create = (req, response) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const postData = req.body;
-                const newPost = new this.posts(Object.assign({}, postData, { author: req.user._id }));
-                const savedPost = yield newPost.save();
-                yield savedPost.populate("author", "-password").execPopulate();
+                const savedPost = yield this.postProvider.create(Object.assign({}, postData, { author: req.user._id }));
                 return response.json(savedPost);
             }
             catch (error) {
@@ -37,9 +35,8 @@ class PostsController {
         });
         this.list = (request, response) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const data = yield this.posts.find({});
-                const count = yield this.posts.countDocuments({});
-                return response.json({ count, data });
+                const result = yield this.postProvider.list(request.query);
+                return response.json(result);
             }
             catch (error) {
                 return errors_1.default(error, response);
@@ -47,8 +44,7 @@ class PostsController {
         });
         this.get = (req, response) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const id = mongoose_1.default.Types.ObjectId(req.params._id);
-                const result = yield this.posts.findById(id);
+                const result = yield this.postProvider.get(req.params._id);
                 if (!result) {
                     return response.status(404).json({ message: "Not found" });
                 }
@@ -62,7 +58,7 @@ class PostsController {
     }
     intializeRoutes() {
         this.router.get(`${this.path}/:_id`, this.get);
-        this.router.get(this.path, this.list);
+        this.router.get(this.path, validation_middleware_1.default(search_params_dto_1.default), this.list);
         this.router.post(this.path, auth_middleware_1.default, validation_middleware_1.default(create_post_dto_1.default), this.create);
     }
 }

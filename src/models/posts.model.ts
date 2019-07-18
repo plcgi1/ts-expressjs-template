@@ -1,5 +1,5 @@
 import * as mongoose from "mongoose";
-import IPost from "../interfaces/post.interface";
+import { IPost } from "../interfaces/post.interface";
 
 const postSchema = new mongoose.Schema({
     author: {
@@ -8,6 +8,7 @@ const postSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId
     },
     content: { type: String },
+    dateCreated: { type: Date, default: Date.now() },
     title: { type: String }
 });
 

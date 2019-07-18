@@ -6,7 +6,14 @@ import handleError from "../helpers/errors";
 
 function validationMiddleware<T>(type: any, skipMissingProperties = false): express.RequestHandler {
     return (req, res, next) => {
-        validate(plainToClass(type, req.body), { skipMissingProperties })
+        const param: any = (/post|put|patch/i).test(req.method) ? req.body : req.query;
+
+        Object.keys(param).forEach((key) => {
+            if ((/^\d+$/).test(param[key])) {
+                param[key] = parseInt(param[key], 10);
+            }
+        });
+        validate(plainToClass(type, param), { skipMissingProperties })
             .then((errors: ValidationError[]) => {
                 if (errors.length > 0) {
                     const message = errors.map((

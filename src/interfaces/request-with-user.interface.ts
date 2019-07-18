@@ -1,5 +1,5 @@
 import { Request } from "express";
-import IUser from "./user.interface";
+import { IUser } from "./user.interface";
 
 interface IRequestWithUser extends Request {
     user: IUser;

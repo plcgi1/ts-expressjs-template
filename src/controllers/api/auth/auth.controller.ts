@@ -1,15 +1,12 @@
-import * as bcrypt from "bcrypt";
 import * as express from "express";
-import * as jwt from "jsonwebtoken";
 import BadCredentialsException from "../../../exceptions/bad-credentials.exception";
 import UserExistsException from "../../../exceptions/user-exists.exception";
 import handleError from "../../../helpers/errors";
 import IController from "../../../interfaces/controller.interface";
-import IDataStoredInToken from "../../../interfaces/data-stored-in-token.interface";
-import ITokenData from "../../../interfaces/token-data.interface";
-import IUser from "../../../interfaces/user.interface";
 import validationMiddleware from "../../../middleware/validation.middleware";
 import Users from "../../../models/users.model";
+import AuthProvider from "../../../providers/auth.provider";
+import UserProvider from "../../../providers/user.provider";
 import LoginDto from "./login.dto";
 import RegisterUserDto from "./register.user.dto";
 
@@ -17,6 +14,8 @@ class AuthController implements IController {
     public path = "/auth";
     public router = express.Router();
     private user = Users;
+    private authProvider = new AuthProvider();
+    private userProvider = new UserProvider();
 
     constructor() {
         this.initializeRoutes();
@@ -28,34 +27,18 @@ class AuthController implements IController {
         this.router.delete(`${this.path}/logout`, this.logout);
     }
 
-    private createToken(user: IUser) {
-        const expiresIn = 60 * 60; // an hour
-        const secret = process.env.JWT_SECRET;
-        const dataStoredInToken: IDataStoredInToken = {
-            _id: user._id,
-        };
-        return {
-            expiresIn,
-            token: jwt.sign(dataStoredInToken, secret, { expiresIn }),
-        };
-    }
-
-    private createCookie(tokenData: ITokenData) {
-        return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}`;
-    }
-
     private registration = async (request: express.Request, response: express.Response) => {
         try {
             const userData: RegisterUserDto = request.body;
-            const user = await this.user.findOne({ email: userData.email });
+            const user = await this.userProvider.getByEmail( userData.email );
             if (user) {
                 return handleError(new UserExistsException(userData.email), response);
             }
-            const hashedPassword = await bcrypt.hash(userData.password, 10);
-            const newUser = await this.user.create({
-                ...userData,
-                password: hashedPassword,
+
+            const newUser = await this.userProvider.create({
+                ...userData
             });
+            // TODO add send hash to email for new user
             newUser.password = undefined;
             response.json(newUser);
         } catch (error) {
@@ -64,15 +47,16 @@ class AuthController implements IController {
     }
 
     private loggingIn = async (request: express.Request, response: express.Response) => {
+        // TODO move find user to user.provider
         const logInData: LoginDto = request.body;
         const user = await this.user.findOne({ email: logInData.email });
         if (user) {
-            const isPasswordMatching = await bcrypt.compare(logInData.password, user.password);
+            const isPasswordMatching = await this.authProvider.comparePassword(logInData.password, user.password);
             if (isPasswordMatching) {
                 user.password = undefined;
 
-                const tokenData = this.createToken(user);
-                const cookie = this.createCookie(tokenData);
+                const tokenData = this.authProvider.createToken(user);
+                const cookie = this.authProvider.createCookie(tokenData);
 
                 response.set("Set-Cookie", [cookie]);
 

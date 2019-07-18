@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = __importStar(require("mongoose"));
 const UserSchema = new mongoose.Schema({
     email: { type: String, required: true },
-    name: { type: String, required: true },
+    name: { type: String },
     password: { type: String, required: true }
 });
 const Users = mongoose.model("User", UserSchema);

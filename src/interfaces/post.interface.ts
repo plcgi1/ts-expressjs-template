@@ -3,5 +3,12 @@ interface IPost {
     content: string;
     title: string;
 }
+interface IPostList {
+    data: IPost[];
+    count: number;
+}
 
-export default IPost;
+export {
+    IPost,
+    IPostList
+};

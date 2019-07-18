@@ -18,14 +18,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bcrypt = __importStar(require("bcrypt"));
 const express = __importStar(require("express"));
-const jwt = __importStar(require("jsonwebtoken"));
 const bad_credentials_exception_1 = __importDefault(require("../../../exceptions/bad-credentials.exception"));
 const user_exists_exception_1 = __importDefault(require("../../../exceptions/user-exists.exception"));
 const errors_1 = __importDefault(require("../../../helpers/errors"));
 const validation_middleware_1 = __importDefault(require("../../../middleware/validation.middleware"));
 const users_model_1 = __importDefault(require("../../../models/users.model"));
+const auth_provider_1 = __importDefault(require("../../../providers/auth.provider"));
+const user_provider_1 = __importDefault(require("../../../providers/user.provider"));
 const login_dto_1 = __importDefault(require("./login.dto"));
 const register_user_dto_1 = __importDefault(require("./register.user.dto"));
 class AuthController {
@@ -33,15 +33,16 @@ class AuthController {
         this.path = "/auth";
         this.router = express.Router();
         this.user = users_model_1.default;
+        this.authProvider = new auth_provider_1.default();
+        this.userProvider = new user_provider_1.default();
         this.registration = (request, response) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const userData = request.body;
-                const user = yield this.user.findOne({ email: userData.email });
+                const user = yield this.userProvider.getByEmail(userData.email);
                 if (user) {
                     return errors_1.default(new user_exists_exception_1.default(userData.email), response);
                 }
-                const hashedPassword = yield bcrypt.hash(userData.password, 10);
-                const newUser = yield this.user.create(Object.assign({}, userData, { password: hashedPassword }));
+                const newUser = yield this.userProvider.create(Object.assign({}, userData));
                 newUser.password = undefined;
                 response.json(newUser);
             }
@@ -53,11 +54,11 @@ class AuthController {
             const logInData = request.body;
             const user = yield this.user.findOne({ email: logInData.email });
             if (user) {
-                const isPasswordMatching = yield bcrypt.compare(logInData.password, user.password);
+                const isPasswordMatching = yield this.authProvider.comparePassword(logInData.password, user.password);
                 if (isPasswordMatching) {
                     user.password = undefined;
-                    const tokenData = this.createToken(user);
-                    const cookie = this.createCookie(tokenData);
+                    const tokenData = this.authProvider.createToken(user);
+                    const cookie = this.authProvider.createCookie(tokenData);
                     response.set("Set-Cookie", [cookie]);
                     response.send(user);
                 }
@@ -79,20 +80,6 @@ class AuthController {
         this.router.post(`${this.path}/register`, validation_middleware_1.default(register_user_dto_1.default), this.registration);
         this.router.post(`${this.path}/login`, validation_middleware_1.default(login_dto_1.default), this.loggingIn);
         this.router.delete(`${this.path}/logout`, this.logout);
-    }
-    createToken(user) {
-        const expiresIn = 60 * 60; // an hour
-        const secret = process.env.JWT_SECRET;
-        const dataStoredInToken = {
-            _id: user._id,
-        };
-        return {
-            expiresIn,
-            token: jwt.sign(dataStoredInToken, secret, { expiresIn }),
-        };
-    }
-    createCookie(tokenData) {
-        return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}`;
     }
 }
 exports.default = AuthController;

@@ -7,18 +7,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const class_validator_1 = require("class-validator");
-class RegisterUserDto {
+class SearchParamsDto {
 }
 __decorate([
-    class_validator_1.IsString(),
-    class_validator_1.IsEmail()
-], RegisterUserDto.prototype, "email", void 0);
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber(),
+    class_validator_1.IsEnum([1, -1])
+], SearchParamsDto.prototype, "sorder", void 0);
 __decorate([
     class_validator_1.IsOptional(),
-    class_validator_1.IsString()
-], RegisterUserDto.prototype, "name", void 0);
+    class_validator_1.IsNumber()
+], SearchParamsDto.prototype, "limit", void 0);
 __decorate([
-    class_validator_1.IsString()
-], RegisterUserDto.prototype, "password", void 0);
-exports.default = RegisterUserDto;
-//# sourceMappingURL=register.user.dto.js.map
+    class_validator_1.IsOptional(),
+    class_validator_1.IsNumber()
+], SearchParamsDto.prototype, "skip", void 0);
+exports.default = SearchParamsDto;
+//# sourceMappingURL=search-params.dto.js.map

@@ -4,6 +4,9 @@ import express from "express";
 import mongoose from "mongoose";
 import errorMiddleware from "./middleware/error";
 
+// TODO add logger
+// TODO add configuration with environment
+
 class App {
     public app: express.Application;
     public port: number;
